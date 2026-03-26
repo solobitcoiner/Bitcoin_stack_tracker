@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bitcoin Stack Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #080808;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem 4rem;
+      font-family: 'DM Mono', monospace;
+      color: #e8e2d9;
+    }
+
+    .wrap {
+      background: #0d0d0d;
+      border-radius: 20px;
+      padding: 2.5rem 2rem 2rem;
+      width: 100%;
+      max-width: 560px;
+      border: 1px solid #161616;
+    }
+
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .btc-symbol {
+      font-family: 'Playfair Display', serif;
+      font-size: 80px;
+      font-weight: 700;
+      color: #F7931A;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 60px rgba(247,147,26,0.25);
+      letter-spacing: -2px;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 400;
+      color: #e8e2d9;
+      letter-spacing: 0.01em;
+      margin-bottom: 4px;
+    }
+
+    .hero-sub {
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .divider-thin {
+      width: 40px;
+      height: 1px;
+      background: #F7931A;
+      opacity: 0.4;
+      margin: 1.25rem auto 0;
+    }
+
+    .section {
+      margin-bottom: 1.75rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .section:nth-child(2) { animation-delay: 0.05s; }
+    .section:nth-child(3) { animation-delay: 0.10s; }
+    .section:nth-child(4) { animation-delay: 0.15s; }
+    .section:nth-child(5) { animation-delay: 0.20s; }
+    .section:nth-child(6) { animation-delay: 0.25s; }
+    .section:nth-child(7) { animation-delay: 0.30s; }
+
+    .sec-label {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 10px;
+    }
+
+    .inputs-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field-wrap {
+      background: #141414;
+      border: 1px solid #1e1e1e;
+      border-radius: 10px;
+      padding: 12px 14px;
+      transition: border-color 0.2s;
+    }
+    .field-wrap:focus-within { border-color: rgba(247,147,26,0.4); }
+
+    .f-label {
+      font-size: 9px;
+      color: #444;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .field-wrap input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 18px;
+      font-weight: 400;
+      color: #e8e2d9;
+      width: 100%;
+    }
+    .field-wrap input::placeholder { color: #333; }
+    .field-wrap input:disabled { color: #F7931A; cursor: default; }
+
+    .live-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      color: #3ddc84;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3ddc84;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    .live-badge.loading { color: #555; }
+    .live-badge.loading .live-dot { background: #555; animation: none; }
+    .live-badge.error { color: #e05a5a; }
+    .live-badge.error .live-dot { background: #e05a5a; animation: none; }
+
+    .override-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: #444;
+      background: none;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      text-decoration: underline;
+      padding: 0;
+      margin-top: 6px;
+      display: none;
+    }
+    .override-btn:hover { color: #888; }
+
+    .slider-box {
+      background: #141414;
+      border: 1px solid #1e1e1e;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .slider-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    .rate-val {
+      font-size: 22px;
+      font-weight: 500;
+      color: #F7931A;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 2px;
+      background: #2a2a2a;
+      border-radius: 1px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #F7931A;
+      box-shadow: 0 0 12px rgba(247,147,26,0.5);
+      cursor: pointer;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid #1e1e1e;
+      background: #141414;
+      color: #555;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: all 0.18s;
+    }
+    .tab:hover { color: #e8e2d9; border-color: #333; }
+    .tab.active { background: #F7931A; border-color: #F7931A; color: #0d0d0d; font-weight: 500; }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: #141414;
+      border: 1px solid #1e1e1e;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .sc-label { font-size: 9px; color: #444; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+    .sc-val { font-size: 15px; font-weight: 500; color: #e8e2d9; line-height: 1.2; }
+    .sc-val.orange { color: #F7931A; }
+    .sc-sub { font-size: 10px; color: #444; margin-top: 5px; }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 220px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #444;
+      text-align: right;
+      padding: 0 8px 10px;
+      font-weight: 400;
+    }
+    th:first-child { text-align: left; }
+    td {
+      text-align: right;
+      padding: 9px 8px;
+      font-size: 12px;
+      color: #555;
+      border-top: 1px solid #181818;
+    }
+    td:first-child { text-align: left; font-size: 12px; color: #888; }
+    tr.peak td { color: #F7931A; }
+    tr.peak td:first-child { color: #F7931A; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    @media (max-width: 420px) {
+      .inputs-row { grid-template-columns: 1fr; }
+      .stats-row  { grid-template-columns: 1fr 1fr; }
+      .btc-symbol { font-size: 60px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="btc-symbol">₿</div>
+    <div class="hero-title">Bitcoin Stack Tracker</div>
+    <div class="hero-sub">Portfolio projection tool</div>
+    <div class="divider-thin"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">Your holdings</div>
+    <div class="inputs-row">
+      <div class="field-wrap">
+        <div class="f-label">BTC amount</div>
+        <input type="number" id="btc-input" value="0.5" step="0.001" min="0" placeholder="0.00" />
+      </div>
+      <div class="field-wrap">
+        <div class="live-row">
+          <div class="f-label" style="margin-bottom:0">Current price (USD)</div>
+          <div class="live-badge loading" id="live-badge">
+            <span class="live-dot"></span>
+            <span id="live-text">fetching…</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+          <input type="number" id="price-input" value="" step="100" min="1" placeholder="loading…" disabled />
+        </div>
+        <button class="override-btn" id="override-btn" onclick="enableManual()">edit manually</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="slider-box">
+      <div class="slider-top">
+        <span class="f-label">Annual growth rate</span>
+        <span class="rate-val" id="rate-display">20%</span>
+      </div>
+      <input type="range" id="growth-slider" min="1" max="100" step="1" value="20" />
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">Time horizon</div>
+    <div class="tabs">
+      <button class="tab" data-yrs="5">5 yrs</button>
+      <button class="tab active" data-yrs="10">10 yrs</button>
+      <button class="tab" data-yrs="20">20 yrs</button>
+      <button class="tab" data-yrs="30">30 yrs</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">Summary</div>
+    <div class="stats-row" id="stats-row"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">Growth curve</div>
+    <div class="chart-wrap"><canvas id="btcChart"></canvas></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">Milestones</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>BTC price</th>
+            <th>Stack value</th>
+            <th>Return</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  let chart = null;
+  let horizon = 10;
+  let isLive = false;
+  let refreshTimer = null;
+
+  function fmt(n) {
+    if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    return '$' + Math.round(n).toLocaleString();
+  }
+  function fmtP(n) { return '$' + Math.round(n).toLocaleString(); }
+
+  function enableManual() {
+    clearInterval(refreshTimer);
+    isLive = false;
+    const inp = document.getElementById('price-input');
+    inp.disabled = false;
+    inp.focus();
+    const badge = document.getElementById('live-badge');
+    badge.className = 'live-badge';
+    badge.querySelector('.live-dot').style.background = '#555';
+    badge.querySelector('.live-dot').style.animation = 'none';
+    document.getElementById('live-text').textContent = 'manual';
+    document.getElementById('override-btn').style.display = 'none';
+  }
+
+  async function fetchPrice() {
+    try {
+      const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+      const d = await r.json();
+      const p = d.bitcoin.usd;
+      if (!p) throw new Error('no price');
+      const inp = document.getElementById('price-input');
+      inp.value = p;
+      inp.disabled = true;
+      isLive = true;
+      const badge = document.getElementById('live-badge');
+      badge.className = 'live-badge';
+      badge.querySelector('.live-dot').style.background = '#3ddc84';
+      badge.querySelector('.live-dot').style.animation = '';
+      document.getElementById('live-text').textContent = 'live';
+      document.getElementById('override-btn').style.display = 'block';
+      compute();
+    } catch (e) {
+      const badge = document.getElementById('live-badge');
+      badge.className = 'live-badge error';
+      document.getElementById('live-text').textContent = 'unavailable';
+      const inp = document.getElementById('price-input');
+      inp.disabled = false;
+      inp.placeholder = '87000';
+      document.getElementById('override-btn').style.display = 'none';
+      compute();
+    }
+  }
+
+  function compute() {
+    const btc   = parseFloat(document.getElementById('btc-input').value) || 0;
+    const price = parseFloat(document.getElementById('price-input').value) || 0;
+    const rate  = parseFloat(document.getElementById('growth-slider').value) / 100;
+    const yrs   = horizon;
+    if (!price) return;
+
+    const now      = btc * price;
+    const endPrice = price * Math.pow(1 + rate, yrs);
+    const endVal   = btc * endPrice;
+    const gain     = endVal - now;
+    const mult     = now > 0 ? (endVal / now).toFixed(1) : '—';
+
+    document.getElementById('stats-row').innerHTML = `
+      <div class="stat-card"><div class="sc-label">Current value</div><div class="sc-val">${fmt(now)}</div><div class="sc-sub">${btc} BTC</div></div>
+      <div class="stat-card"><div class="sc-label">In ${yrs} years</div><div class="sc-val orange">${fmt(endVal)}</div><div class="sc-sub">${fmtP(Math.round(endPrice))}/BTC</div></div>
+      <div class="stat-card"><div class="sc-label">Total gain</div><div class="sc-val orange">${fmt(gain)}</div><div class="sc-sub">${mult}× return</div></div>`;
+
+    const labels = [], vals = [];
+    for (let i = 0; i <= yrs; i++) {
+      labels.push(new Date().getFullYear() + i);
+      vals.push(btc * price * Math.pow(1 + rate, i));
+    }
+
+    const gridC = 'rgba(255,255,255,0.05)';
+    const tickC = 'rgba(255,255,255,0.25)';
+
+    if (chart) {
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = vals;
+      chart.update();
+    } else {
+      chart = new Chart(document.getElementById('btcChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            data: vals,
+            borderColor: '#F7931A',
+            backgroundColor: 'rgba(247,147,26,0.06)',
+            borderWidth: 1.5,
+            fill: true,
+            pointRadius: vals.length > 15 ? 0 : 3,
+            pointBackgroundColor: '#F7931A',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#181818',
+              borderColor: '#2a2a2a',
+              borderWidth: 1,
+              titleColor: '#555',
+              bodyColor: '#F7931A',
+              padding: 10,
+              callbacks: {
+                label: c => ' ' + fmt(c.raw),
+                title: c => 'Year ' + c[0].label
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: gridC },
+              ticks: { color: tickC, font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 7, autoSkip: true }
+            },
+            y: {
+              grid: { color: gridC },
+              ticks: { color: tickC, font: { family: 'DM Mono', size: 10 }, callback: v => fmt(v) }
+            }
+          }
+        }
+      });
+    }
+
+    const milestones = [...new Set([1, 2, 3, 5, Math.round(yrs / 2), yrs])].filter(v => v <= yrs).sort((a, b) => a - b);
+    document.getElementById('table-body').innerHTML = milestones.map(yr => {
+      const p   = Math.round(price * Math.pow(1 + rate, yr));
+      const v   = btc * p;
+      const pct = Math.round((Math.pow(1 + rate, yr) - 1) * 100);
+      return `<tr class="${yr === yrs ? 'peak' : ''}">
+        <td>${new Date().getFullYear() + yr} <span style="color:#333">+${yr}y</span></td>
+        <td>${fmtP(p)}</td>
+        <td>${fmt(v)}</td>
+        <td>+${pct}%</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('growth-slider').addEventListener('input', function () {
+    document.getElementById('rate-display').textContent = this.value + '%';
+    compute();
+  });
+  document.getElementById('btc-input').addEventListener('input', compute);
+  document.getElementById('price-input').addEventListener('input', compute);
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      this.classList.add('active');
+      horizon = parseInt(this.dataset.yrs);
+      if (chart) { chart.destroy(); chart = null; }
+      compute();
+    });
+  });
+
+  fetchPrice();
+  refreshTimer = setInterval(() => { if (isLive) fetchPrice(); }, 30000);
+</script>
+</body>
+</html>
